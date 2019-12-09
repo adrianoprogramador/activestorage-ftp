@@ -34,6 +34,18 @@ production:
   ftp_chmod: 0600
 ```
 
+## Remote md5.php
+
+rails-storage/md5.php
+
+```php
+<?php
+  if(isset($_GET['file'])) {
+    echo( md5_file($_GET['file']) );
+  }
+?>
+```
+
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
