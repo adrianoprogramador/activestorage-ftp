@@ -5,6 +5,7 @@ require "digest/md5"
 require "active_support/core_ext/numeric/bytes"
 require "net/http"
 require "digest/md5"
+require "open-uri"
 
 
 module ActiveStorage
