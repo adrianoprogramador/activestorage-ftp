@@ -3,7 +3,8 @@ require "active_storage_ftp/ex_ftp"
 require "active_storage_ftp/ex_ftptls"
 require "digest/md5"
 require "active_support/core_ext/numeric/bytes"
-require 'digest/md5'
+require "net/http"
+require "digest/md5"
 
 
 module ActiveStorage
