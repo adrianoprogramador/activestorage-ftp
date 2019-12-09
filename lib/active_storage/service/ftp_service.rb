@@ -3,6 +3,8 @@ require "active_storage_ftp/ex_ftp"
 require "active_storage_ftp/ex_ftptls"
 require "digest/md5"
 require "active_support/core_ext/numeric/bytes"
+require 'digest/md5'
+
 
 module ActiveStorage
 
@@ -24,7 +26,7 @@ module ActiveStorage
             end
           end
         end
-        ensure_integrity_of(key, checksum) if checksum
+        ensure_integrity_of(key, checksum, io) if checksum
       end
     end
 
@@ -132,9 +134,11 @@ module ActiveStorage
       [key[0..1], key[2..3]].join("/")
     end
 
-    def ensure_integrity_of(key, checksum)
-      response = request_head(key)
-      unless "#{response['Content-MD5']}==" == checksum
+    def ensure_integrity_of(key, checksum, io)
+      remote_checksum = remote_md5_for_key(key)
+      local_checksum = Digest::MD5.hexdigest(File.read(io))
+
+      unless remote_checksum == local_checksum
         delete key
         raise ActiveStorage::IntegrityError
       end
@@ -148,15 +152,27 @@ module ActiveStorage
       ActiveStorage::Current.host
     end
 
-    def request_head(key)
-      uri = URI(http_url_for(key))
-      request = Net::HTTP.new(uri.host, uri.port)
-      request.use_ssl = uri.scheme == 'https'
-      request.request_head(uri.path)
-    end
+    # def request_head(key)
+    #   uri = URI(http_url_for(key))
+    #   request = Net::HTTP.new(uri.host, uri.port)
+    #   request.use_ssl = uri.scheme == 'https'
+    #   request.request_head(uri.path)
+    # end
 
     def http_url_for(key)
-      ([ftp_url, folder_for(key), key].join('/'))
+      ([ftp_url, folder_for_key(key)].join('/'))
+    end
+
+    def folder_for_key(key)
+      ([folder_for(key), key].join('/'))
+    end
+
+    def remote_md5_for_key(key)
+      query = "md5.php?file=#{folder_for_key(key)}"
+      url = ([ftp_url, query].join('/'))
+
+      res = Net::HTTP.get_response(URI(url))
+      res.body
     end
 
     def inferred_content_type
